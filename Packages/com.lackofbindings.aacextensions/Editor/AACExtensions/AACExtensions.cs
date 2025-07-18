@@ -1,0 +1,77 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using AnimatorAsCode.V1;
+using UnityEditor.Animations;
+
+namespace LackofbindingsAAC
+{
+    /// <summary>
+    /// Extension class to add extra functionality to AAC. 
+    /// </summary>
+    public static class AACExtensions
+    {
+        /// <summary>
+        /// Create a new BlendTree asset and returns a native BlendTree object. The asset is generated into the container. You may use NewBlendTree() instead to obtain a fluent interface.
+        /// This overload allows setting a custom name.
+        /// </summary>
+        /// <inheritdoc cref="AacFlBase.NewBlendTreeAsRaw()" />
+        public static BlendTree NewBlendTreeAsRaw(this AacFlBase aac, string name)
+        {
+            return AacInternals.NewBlendTreeAsRaw(aac.AccessConfiguration(), name);
+        }
+
+        /// <summary>
+        /// Create a new BlendTree asset. The asset is generated into the container.
+        /// This overload allows setting a custom name.
+        /// </summary>
+        /// <inheritdoc cref="AacFlBase.NewBlendTree()" />
+        public static AacFlNonInitializedBlendTree NewBlendTree(this AacFlBase aac, string name)
+        {
+            return new AacFlNonInitializedBlendTree(AacInternals.NewBlendTreeAsRaw(aac.AccessConfiguration(), name));
+        }
+
+        /// <summary>
+        /// Animates the scale property of a transform.
+        /// </summary>
+        public static void AnimatesScaleWithOneFrame(this AacFlEditClip clip, Transform transform, Vector3 scale)
+        {
+            clip.Animates(transform, "m_LocalScale.x").WithOneFrame(scale.x);
+            clip.Animates(transform, "m_LocalScale.y").WithOneFrame(scale.y);
+            clip.Animates(transform, "m_LocalScale.z").WithOneFrame(scale.z);
+        }
+
+        /// <summary>
+        /// Animates the scale property of a transform to a uniform value.
+        /// </summary>
+        public static void AnimatesScaleWithOneFrame(this AacFlEditClip clip, Transform transform, float scale)
+        {
+            clip.Animates(transform, "m_LocalScale.x").WithOneFrame(scale);
+            clip.Animates(transform, "m_LocalScale.y").WithOneFrame(scale);
+            clip.Animates(transform, "m_LocalScale.z").WithOneFrame(scale);
+        }
+
+        /// <summary>
+        /// Clear out all layers, parameters, and sub-assets from an animation controller.
+        /// For use with a semi-destructive workflow using an AnimationController as the asset container.
+        /// Intended to be run once before each generation, so we can have a fresh blank animator without losing the same GUID.
+        /// </summary>
+        public static void ClearOutController(this AacFlBase aac, AnimatorController controller)
+        {
+            {
+                var ctrl = (AnimatorController)controller;
+                foreach (var l in ctrl.layers)
+                {
+                    new AacAnimatorRemoval(ctrl).RemoveLayer(l.name);
+                }
+
+                foreach (var p in ctrl.parameters)
+                {
+                    ctrl.RemoveParameter(p);
+                }
+
+                aac.ClearPreviousAssets();
+            }
+        }
+    }
+}
