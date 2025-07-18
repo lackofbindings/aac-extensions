@@ -25,4 +25,12 @@ This package also includes an extension class for AAC that includes a few QoL fu
 
 * `AacFlBase.NewBlendTree(string name)` - To create a new blend tree while providing a name like you can with clips.
 * `AacFlEditClip.AnimatesScaleWIthOneFrame(Transform transform, float scale)` - To quickly animate uniform scale.
-* `AacFlBase.ClearOutController(AnimatorController controller)` - To quickly clear all layers, params, and acc-created sub-assets from a controller. *(Only relevant to my janky workflow)*.
+* `AacFlBase.ClearOutController(AnimatorController controller)` - To quickly clear all layers, params, and aac-created sub-assets from a controller. *(Only relevant to my janky workflow)*.
+
+## Installation
+
+Depends on [Animator as Code](https://github.com/hai-vr/av3-animator-as-code) by Hai, as well as the [VRChat Avatars SDK 3](https://vrchat.com/home/download).
+
+Make sure you have the AAC repo added to your VCC first. The VCC should install these automatically alongside this package as long as you have their repo added first.
+
+Then you can install this package using the VRChat Creator Companion either via the [Listing Page](https://lackofbindings.github.io/aac-extensions/) or a direct link to the [index.json](https://lackofbindings.github.io/aac-extensions/index.json). 
