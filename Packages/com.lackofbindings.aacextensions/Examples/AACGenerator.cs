@@ -29,25 +29,24 @@ namespace LackofbindingsAAC.Examples
     public class AACGenerator : MonoBehaviour, IEditorOnly
     {
         public RuntimeAnimatorController controller;
+        public AACAssetContainer assetContainer;
         public string AssetKey;
         public Transform rootTransform;
         public VRCExpressionParameters[] mainPresets;
         public AnimatorController oldController;
-        public AnimationClip previewAnimation;
         private AACUtils _utils;
         public VRCExpressionParameters mainParamsList;
 
         private void OnEnable()
         {
-            if (controller == null) return;
+            if (assetContainer == null) return;
             if (rootTransform == null) rootTransform = this.transform;
             if (AssetKey == null || AssetKey.Length == 0) this.AssetKey = UnityEditor.GUID.Generate().ToString();
 
-            // This configuration is only for demonstration purposes. It does not create persistent assets in the project.
             var aac = AacV1.Create(new AacConfiguration
             {
                 AnimatorRoot = rootTransform,
-                AssetContainer = controller,
+                AssetContainer = assetContainer,
                 AssetKey = AssetKey,
                 ContainerMode = AacConfiguration.Container.OnlyWhenPersistenceRequired,
                 SystemName = this.GetType().Name,
@@ -56,23 +55,24 @@ namespace LackofbindingsAAC.Examples
             });
 
             // Clear out animation controller before starting
-            aac.ClearOutController((AnimatorController)controller);
+            // aac.ClearOutController((AnimatorController)controller);
+
+            assetContainer.ResetContainer();
 
             // Collect references to various avatar parts
-            Transform bodyTransform = rootTransform.Find("Body");
-            SkinnedMeshRenderer bodySkinnedMeshRenderer = bodyTransform.GetComponent<SkinnedMeshRenderer>();
-            Transform faceTransform = rootTransform.Find("Face");
-            SkinnedMeshRenderer faceSkinnedMeshRenderer = faceTransform.GetComponent<SkinnedMeshRenderer>();
-            Transform hudTransform = rootTransform.Find("Hud");
-            SkinnedMeshRenderer hudSkinnedMeshRenderer = hudTransform.GetComponent<SkinnedMeshRenderer>();
-            VRCPhysBone earsPhysBone = rootTransform.Find("Physbones/Ears").GetComponent<VRCPhysBone>();
+            SkinnedMeshRenderer bodySkinnedMeshRenderer = rootTransform.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
+            VRCPhysBone tailPhysBone = rootTransform.Find("Dynamics/PhysBones/Tail")?.GetComponent<VRCPhysBone>();
 
             // Reuse an existing animator controller, and edit its contents
-            var layer = aac.CreateMainArbitraryControllerLayer((AnimatorController)controller);
+            // var layer = aac.CreateMainArbitraryControllerLayer((AnimatorController)controller);
+            var controller = aac.NewAnimatorController("Example FX");
+            var layer = controller.NewLayer();
 
-            _utils = new AACUtils(aac, (AnimatorController)controller, layer);
+            assetContainer.ToAnimator();
 
-            const string paramPrefixBase = "Example/C";
+            _utils = new AACUtils(aac, controller, layer);
+
+            const string paramPrefixBase = "Example/AAC";
 
             var directBlendWeight = layer.FloatParameter($"{paramPrefixBase}/DirectBlendWeight");
             layer.OverrideValue(directBlendWeight, 1f);
@@ -83,66 +83,75 @@ namespace LackofbindingsAAC.Examples
             string[] colors = new string[] { "R", "G", "B", "A" };
 
             // Set up 4 sub blend trees, one for each material layer on Body
-            for (var l = 1; l <= 4; l++)
+            // for (var l = 1; l <= 4; l++)
+            // {
+            //     var LTree = aac.NewBlendTree($"Body L{l}").Direct();
+            //     rootBlendTree.WithAnimation(LTree, directBlendWeight);
+
+            //     string paramPrefix = $"{paramPrefixBase}/L{l}";
+            //     string propertyPrefix = "material._RGBAColorMask";
+
+            //     LTree.WithAnimation(_utils.NewHSVBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Color"), directBlendWeight);
+            //     LTree.WithAnimation(_utils.NewMetallicBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Metallic"), directBlendWeight);
+            //     LTree.WithAnimation(_utils.NewSmoothnessBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Smoothness"), directBlendWeight);
+            //     if (l != 4) LTree.WithAnimation(_utils.NewPatternBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}Map_ST_{colors[l - 1]}"), directBlendWeight);
+
+            // }
             {
-                var LTree = aac.NewBlendTree($"Body L{l}").Direct();
-                rootBlendTree.WithAnimation(LTree, directBlendWeight);
+                var tree = aac.NewBlendTree($"Body Material").Direct();
+                rootBlendTree.WithAnimation(tree, directBlendWeight);
 
-                string paramPrefix = $"{paramPrefixBase}/L{l}";
-                string propertyPrefix = "material._RGBAColorMask";
+                string paramPrefix = $"{paramPrefixBase}/Body";
+                string propertyPrefix = "material._Color";
 
-                LTree.WithAnimation(_utils.NewHSVBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Color"), directBlendWeight);
-                LTree.WithAnimation(_utils.NewMetallicBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Metallic"), directBlendWeight);
-                LTree.WithAnimation(_utils.NewSmoothnessBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}{colors[l - 1]}Smoothness"), directBlendWeight);
-                if (l != 4) LTree.WithAnimation(_utils.NewPatternBlendTree(paramPrefix, bodySkinnedMeshRenderer, $"{propertyPrefix}Map_ST_{colors[l - 1]}"), directBlendWeight);
-
+                tree.WithAnimation(_utils.NewHSVBlendTree(paramPrefix, bodySkinnedMeshRenderer, propertyPrefix), directBlendWeight);
             }
 
             // Set up a hue rotation blend tree for the glows
-            rootBlendTree.WithAnimation(_utils.NewHueBlendTree(layer.FloatParameter($"{paramPrefixBase}/Glow/Hue"), new[] { bodySkinnedMeshRenderer, faceSkinnedMeshRenderer, hudSkinnedMeshRenderer }, $"material._EmissionColor", 1.0f, true), directBlendWeight);
-            rootBlendTree.WithAnimation(_utils.NewHueBlendTree(layer.FloatParameter($"{paramPrefixBase}/Glow/Hue"), new[] { bodySkinnedMeshRenderer }, $"material._EmissionColor1", 1.0f, true), directBlendWeight);
+            // rootBlendTree.WithAnimation(_utils.NewHueBlendTree(layer.FloatParameter($"{paramPrefixBase}/Glow/Hue"), new[] { bodySkinnedMeshRenderer, faceSkinnedMeshRenderer, hudSkinnedMeshRenderer }, $"material._EmissionColor", 1.0f, true), directBlendWeight);
+            // rootBlendTree.WithAnimation(_utils.NewHueBlendTree(layer.FloatParameter($"{paramPrefixBase}/Glow/Hue"), new[] { bodySkinnedMeshRenderer }, $"material._EmissionColor1", 1.0f, true), directBlendWeight);
 
-            // Set up toggle for ears
-            rootBlendTree.WithAnimation(_utils.NewBlendTreeFromClips(layer.FloatParameter($"{paramPrefixBase}/Ears"), new[] {
-                aac.NewClip("Ears Off").Animating(clip => {
-                    clip.Animates(earsPhysBone.gameObject).WithOneFrame(0);
-                    clip.AnimatesScaleWithOneFrame(earsPhysBone.rootTransform, 0);
+            // Set up toggle for tail
+            rootBlendTree.WithAnimation(_utils.NewBlendTreeFromClips(layer.FloatParameter($"{paramPrefixBase}/Tail"), new[] {
+                aac.NewClip("Tail Off").Animating(clip => {
+                    clip.Animates(tailPhysBone.gameObject).WithOneFrame(0);
+                    clip.AnimatesScaleWithOneFrame(tailPhysBone.rootTransform, 0);
                 }),
-                aac.NewClip("Ears On").Animating(clip => {
-                    clip.Animates(earsPhysBone.gameObject).WithOneFrame(1);
-                    clip.AnimatesScaleWithOneFrame(earsPhysBone.rootTransform, 1);
+                aac.NewClip("Tail On").Animating(clip => {
+                    clip.Animates(tailPhysBone.gameObject).WithOneFrame(1);
+                    clip.AnimatesScaleWithOneFrame(tailPhysBone.rootTransform, 1);
                 }),
             }), directBlendWeight);
 
             // Set up toggle for AL Theme Colors
-            rootBlendTree.WithAnimation(_utils.NewBlendTreeFromClips(layer.FloatParameter($"{paramPrefixBase}/ALThemeColors"), new[] {
-                aac.NewClip("AL Theme Colors Off").Animating(clip => {
+            // rootBlendTree.WithAnimation(_utils.NewBlendTreeFromClips(layer.FloatParameter($"{paramPrefixBase}/ALThemeColors"), new[] {
+            //     aac.NewClip("AL Theme Colors Off").Animating(clip => {
                     
-                    // var defaultALColorR = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorR");
-                    // var defaultALColorG = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorG");
-                    // var defaultALColorB = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorB");
+            //         // var defaultALColorR = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorR");
+            //         // var defaultALColorG = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorG");
+            //         // var defaultALColorB = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorB");
                     
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorR").WithOneFrame(defaultALColorR);
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorG").WithOneFrame(defaultALColorG);
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorB").WithOneFrame(defaultALColorB);
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorR").WithOneFrame(defaultALColorR);
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorG").WithOneFrame(defaultALColorG);
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorB").WithOneFrame(defaultALColorB);
 
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeR").WithOneFrame(0);
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeG").WithOneFrame(0);
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeB").WithOneFrame(0);
-                }),
-                aac.NewClip("AL Theme Colors On").Animating(clip => {
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorR").WithOneFrame(Color.white);
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorG").WithOneFrame(Color.white);
-                    // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorB").WithOneFrame(Color.white);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeR").WithOneFrame(0);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeG").WithOneFrame(0);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeB").WithOneFrame(0);
+            //     }),
+            //     aac.NewClip("AL Theme Colors On").Animating(clip => {
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorR").WithOneFrame(Color.white);
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorG").WithOneFrame(Color.white);
+            //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorB").WithOneFrame(Color.white);
 
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeR").WithOneFrame(1);
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeG").WithOneFrame(4);
-                    clip.Animates(bodySkinnedMeshRenderer, "material._alThemeB").WithOneFrame(2);
-                }),
-            }), directBlendWeight);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeR").WithOneFrame(1);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeG").WithOneFrame(4);
+            //         clip.Animates(bodySkinnedMeshRenderer, "material._alThemeB").WithOneFrame(2);
+            //     }),
+            // }), directBlendWeight);
 
             // Set up main presets
-            var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
+            // var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
 
         }
 

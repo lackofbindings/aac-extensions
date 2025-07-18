@@ -17,12 +17,12 @@ namespace LackofbindingsAAC
     public class AACUtils : IEditorOnly
     {
         private readonly AacFlBase _aac;
-        private readonly AnimatorController _controller;
+        private readonly AacFlController _controller;
         private readonly AacFlLayer _anyLayer;
         public static string[] RGBA = new string[] { "R", "G", "B", "A" };
         public static string[] HSV = new string[] { "H", "S", "V" };
 
-        public AACUtils(AacFlBase aac, AnimatorController controller, AacFlLayer baseLayer)
+        public AACUtils(AacFlBase aac, AacFlController controller, AacFlLayer baseLayer)
         {
             _aac = aac;
             _controller = controller;
@@ -453,7 +453,7 @@ namespace LackofbindingsAAC
         /// </param>
         public AacFlLayer NewPresetsLayer(string layerNamePrefix, string paramPrefix, VRCExpressionParameters[] presets, bool addRandom = true, int addCustom = 1)
         {
-            var presetsLayer = _aac.CreateSupportingArbitraryControllerLayer((AnimatorController)_controller, $"{layerNamePrefix} Presets");
+            var presetsLayer = _controller.NewLayer($"{layerNamePrefix} Presets");
             var presetWaitingState = presetsLayer.NewState("Waiting", 0, 0);
             presetWaitingState.TransitionsFromEntry();
             var presetSelectorParameter = presetsLayer.IntParameter($"{paramPrefix}/Preset");
@@ -599,7 +599,7 @@ namespace LackofbindingsAAC
         /// <returns></returns>
         public AacFlLayer NewSetDefaultsLayer(string paramPrefix, VRCExpressionParameters defaults)
         {
-            var presetsLayer = _aac.CreateSupportingArbitraryControllerLayer((AnimatorController)_controller, "Set Defaults");
+            var presetsLayer = _controller.NewLayer("Set Defaults"); 
 
             var waitingState = presetsLayer.NewState("Waiting", 0, 0);
             waitingState.TransitionsFromEntry();
@@ -654,7 +654,7 @@ namespace LackofbindingsAAC
         /// </summary>
         public AacFlLayer NewExclusiveParametersLayer(string layerNamePrefix, AacFlParameter[] parameters)
         {
-            var layer = _aac.CreateSupportingArbitraryControllerLayer((AnimatorController)_controller, $"{layerNamePrefix} Exclusive States");
+            var layer = _controller.NewLayer($"{layerNamePrefix} Exclusive States");
             var waitingState = layer.NewState("Waiting", 0, 0);
             waitingState.TransitionsFromEntry();
 
@@ -793,7 +793,7 @@ namespace LackofbindingsAAC
 
         public AacFlLayer NewCopyBoolToFloatLayer(AacFlBoolParameter boolParameter, string floatParameterName)
         {
-            var layer = _aac.CreateSupportingArbitraryControllerLayer((AnimatorController)_controller, $"{PrefixToClipName(boolParameter.Name)} To Float");
+            var layer = _controller.NewLayer($"{PrefixToClipName(boolParameter.Name)} To Float");
             var waitingState = layer.NewState("Waiting", 0, 0);
             waitingState.TransitionsFromEntry();
 
