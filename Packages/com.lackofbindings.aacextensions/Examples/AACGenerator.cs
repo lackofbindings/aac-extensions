@@ -28,7 +28,7 @@ namespace LackofbindingsAAC.Examples
     [ExecuteInEditMode]
     public class AACGenerator : MonoBehaviour, IEditorOnly
     {
-        public RuntimeAnimatorController controller;
+        private AacFlController _controller;
         public AACAssetContainer assetContainer;
         public string AssetKey;
         public Transform rootTransform;
@@ -61,10 +61,10 @@ namespace LackofbindingsAAC.Examples
             SkinnedMeshRenderer bodySkinnedMeshRenderer = rootTransform.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
             VRCPhysBone tailPhysBone = rootTransform.Find("Dynamics/PhysBones/Tail")?.GetComponent<VRCPhysBone>();
 
-            var controller = aac.NewAnimatorController("Example FX");
-            var layer = controller.NewLayer();
+            _controller = aac.NewAnimatorController("Example FX");
+            var layer = _controller.NewLayer();
 
-            _utils = new AACUtils(aac, controller, layer);
+            _utils = new AACUtils(aac, _controller, layer);
 
             const string paramPrefixBase = "Example/AAC";
 
@@ -148,7 +148,7 @@ namespace LackofbindingsAAC.Examples
             var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
             
 
-            assetContainer.updateMainAnimator(controller.AnimatorController);
+            assetContainer.updateMainAnimator(_controller.AnimatorController);
         }
 
         [ContextMenu("Converts presets from RGB to HSV")]
@@ -166,7 +166,7 @@ namespace LackofbindingsAAC.Examples
         [ContextMenu("Sync Animator Params To Main List")]
         public void SyncAnimatorParamsToListAction()
         {
-            AACUtils.SyncAnimatorParamsToList((AnimatorController)controller, mainParamsList);
+            AACUtils.SyncAnimatorParamsToList(_controller.AnimatorController, mainParamsList);
         }
 
         [ContextMenu("Generate Animator")]
