@@ -623,8 +623,9 @@ MonoBehaviour:
             version: 1
             fileID: 0
             guid: 
-            id: 
-            objRef: {fileID: 0}
+            id: eb8852991fa28c14489d06859b002d63:509341098241641562|Packages/com.lackofbindings.aacextensions/Examples/AssetContainer.asset|AACAssetContainer_FX_Proxy
+            objRef: {fileID: 509341098241641562, guid: eb8852991fa28c14489d06859b002d63,
+              type: 2}
           type: 5
         menus: []
         prms: []

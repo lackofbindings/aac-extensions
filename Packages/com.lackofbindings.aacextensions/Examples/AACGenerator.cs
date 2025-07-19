@@ -149,10 +149,10 @@ namespace LackofbindingsAAC.Examples
             var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
             
 
-            assetContainer.updateAnimator("FX", _controller.AnimatorController);
+            assetContainer.UpdateAnimator("FX", _controller.AnimatorController);
         }
 
-        [ContextMenu("Converts presets from RGB to HSV")]
+        [ContextMenu("Convert presets from RGB to HSV")]
         public void ConvertPresetsRGBToHSVAction()
         {
             AACUtils.ConvertPresetsRGBToHSV(mainPresets);
