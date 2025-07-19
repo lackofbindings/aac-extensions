@@ -54,21 +54,15 @@ namespace LackofbindingsAAC.Examples
                 DefaultsProvider = new AacDefaultsProvider(false)
             });
 
-            // Clear out animation controller before starting
-            // aac.ClearOutController((AnimatorController)controller);
-
-            assetContainer.ResetContainer();
+            // Clear out asset container before starting
+            aac.ClearPreviousAssetsAll();
 
             // Collect references to various avatar parts
             SkinnedMeshRenderer bodySkinnedMeshRenderer = rootTransform.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
             VRCPhysBone tailPhysBone = rootTransform.Find("Dynamics/PhysBones/Tail")?.GetComponent<VRCPhysBone>();
 
-            // Reuse an existing animator controller, and edit its contents
-            // var layer = aac.CreateMainArbitraryControllerLayer((AnimatorController)controller);
             var controller = aac.NewAnimatorController("Example FX");
             var layer = controller.NewLayer();
-
-            assetContainer.ToAnimator();
 
             _utils = new AACUtils(aac, controller, layer);
 
@@ -126,11 +120,11 @@ namespace LackofbindingsAAC.Examples
             // Set up toggle for AL Theme Colors
             // rootBlendTree.WithAnimation(_utils.NewBlendTreeFromClips(layer.FloatParameter($"{paramPrefixBase}/ALThemeColors"), new[] {
             //     aac.NewClip("AL Theme Colors Off").Animating(clip => {
-                    
+
             //         // var defaultALColorR = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorR");
             //         // var defaultALColorG = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorG");
             //         // var defaultALColorB = bodySkinnedMeshRenderer.sharedMaterials[0].GetColor("_alColorB");
-                    
+
             //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorR").WithOneFrame(defaultALColorR);
             //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorG").WithOneFrame(defaultALColorG);
             //         // clip.AnimatesColor(bodySkinnedMeshRenderer, "material._alColorB").WithOneFrame(defaultALColorB);
@@ -151,8 +145,10 @@ namespace LackofbindingsAAC.Examples
             // }), directBlendWeight);
 
             // Set up main presets
-            // var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
+            var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
+            
 
+            assetContainer.updateMainAnimator(controller.AnimatorController);
         }
 
         [ContextMenu("Converts presets from RGB to HSV")]
