@@ -19,10 +19,11 @@ using LackofbindingsAAC;
 namespace LackofbindingsAAC.Examples
 {
     /// <summary>
-    /// This is a script that generates an animator using my admittedly janky semi-destructive workflow.
-    /// In order to use this, you attach it to an empty in your scene, and supply it with a sacrificial AnimationController.
-    /// Every time scripts compile, it will clear out the AnimationController and then generate new state machines and params based on the below code.
-    /// You can then put that AnimationController into whatever you want, the GUID will remain constant through generations since it re-uses the same asset.
+    /// This is a script that generates an animator using my admittedly strange workflow.
+    /// In order to use this, you attach it to an empty in your scene, and supply it with an ACCAssetContainer (ScriptableAsset also included in this library).
+    /// Every time scripts compile, it will clear out the asset container and then generate a new animator (and other sub assets) into it based on the below code.
+    /// AACAssetContainer provides updateMainAnimator() that will copy the provided animator to its internal animator, as to keep the GUID constant between generations.
+    /// You can then put that AnimationController into whatever you want.
     /// The idea is to put it into a VRCFury Full Controller component to be merged into an avatar/prop. 
     /// </summary>
     [ExecuteInEditMode]
@@ -148,7 +149,7 @@ namespace LackofbindingsAAC.Examples
             var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
             
 
-            assetContainer.updateMainAnimator(_controller.AnimatorController);
+            assetContainer.updateAnimator("FX", _controller.AnimatorController);
         }
 
         [ContextMenu("Converts presets from RGB to HSV")]
