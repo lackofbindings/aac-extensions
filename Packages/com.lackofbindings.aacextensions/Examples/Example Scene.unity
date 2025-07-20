@@ -224,7 +224,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 284140813}
-  - component: {fileID: 284140812}
+  - component: {fileID: 284140814}
   m_Layer: 0
   m_Name: AAC
   m_TagString: Untagged
@@ -232,25 +232,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &284140812
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 284140811}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5147a817cf5cdfc4993972aaa724891e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  assetContainer: {fileID: 11400000, guid: eb8852991fa28c14489d06859b002d63, type: 2}
-  AssetKey: 8478bc0684f527b47982ca72d1419b3d
-  rootTransform: {fileID: 1009809719}
-  mainPresets:
-  - {fileID: 11400000, guid: 5b1f3f1595ea4c240b5ef4e546af7aef, type: 2}
-  oldController: {fileID: 0}
-  mainParamsList: {fileID: 0}
 --- !u!4 &284140813
 Transform:
   m_ObjectHideFlags: 0
@@ -266,6 +247,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &284140814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 284140811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1387c49a335180441ac26823a3b793fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AssetContainer: {fileID: 11400000, guid: eb8852991fa28c14489d06859b002d63, type: 2}
+  AssetKey: 8478bc0684f527b47982ca72d1419b3d
+  RootTransform: {fileID: 1009809719}
+  MainPresets:
+  - {fileID: 11400000, guid: 5b1f3f1595ea4c240b5ef4e546af7aef, type: 2}
+  OldController: {fileID: 0}
+  MainParamsList: {fileID: 0}
 --- !u!1001 &1009809718
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -623,8 +623,8 @@ MonoBehaviour:
             version: 1
             fileID: 0
             guid: 
-            id: eb8852991fa28c14489d06859b002d63:509341098241641562|Packages/com.lackofbindings.aacextensions/Examples/AssetContainer.asset|AACAssetContainer_FX_Proxy
-            objRef: {fileID: 509341098241641562, guid: eb8852991fa28c14489d06859b002d63,
+            id: eb8852991fa28c14489d06859b002d63:8640921625893962866|Packages/com.lackofbindings.aacextensions/Examples/AssetContainer.asset|AACAssetContainer_FX_Proxy
+            objRef: {fileID: 8640921625893962866, guid: eb8852991fa28c14489d06859b002d63,
               type: 2}
           type: 5
         menus: []

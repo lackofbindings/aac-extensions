@@ -29,29 +29,35 @@ namespace LackofbindingsAAC.Examples
     [ExecuteInEditMode]
     public class AACGenerator : MonoBehaviour, IEditorOnly
     {
-        private AacFlController _controller;
-        public AACAssetContainer assetContainer;
+        [Header("AAC")]
+        public AACAssetContainer AssetContainer;
         public string AssetKey;
-        public Transform rootTransform;
-        public VRCExpressionParameters[] mainPresets;
-        public AnimatorController oldController;
+        public Transform RootTransform;
+
+        [Header("Avatar")]
+        public VRCExpressionParameters[] MainPresets;
+
+        [Header("Commands")]
+        public AnimatorController OldController;
+        public VRCExpressionParameters MainParamsList;
+
         private AACUtils _utils;
-        public VRCExpressionParameters mainParamsList;
+        private AacFlController _controller;
 
         private void OnEnable()
         {
-            if (assetContainer == null) return;
-            if (rootTransform == null) rootTransform = this.transform;
+            if (AssetContainer == null) return;
+            if (RootTransform == null) RootTransform = this.transform;
             if (AssetKey == null || AssetKey.Length == 0) this.AssetKey = UnityEditor.GUID.Generate().ToString();
 
             var aac = AacV1.Create(new AacConfiguration
             {
-                AnimatorRoot = rootTransform,
-                AssetContainer = assetContainer,
+                AnimatorRoot = RootTransform,
+                AssetContainer = AssetContainer,
                 AssetKey = AssetKey,
                 ContainerMode = AacConfiguration.Container.OnlyWhenPersistenceRequired,
                 SystemName = this.GetType().Name,
-                DefaultValueRoot = rootTransform,
+                DefaultValueRoot = RootTransform,
                 DefaultsProvider = new AacDefaultsProvider(false)
             });
 
@@ -59,8 +65,8 @@ namespace LackofbindingsAAC.Examples
             aac.ClearPreviousAssetsAll();
 
             // Collect references to various avatar parts
-            SkinnedMeshRenderer bodySkinnedMeshRenderer = rootTransform.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
-            VRCPhysBone tailPhysBone = rootTransform.Find("Dynamics/PhysBones/Tail")?.GetComponent<VRCPhysBone>();
+            SkinnedMeshRenderer bodySkinnedMeshRenderer = RootTransform.Find("Body")?.GetComponent<SkinnedMeshRenderer>();
+            VRCPhysBone tailPhysBone = RootTransform.Find("Dynamics/PhysBones/Tail")?.GetComponent<VRCPhysBone>();
 
             _controller = aac.NewAnimatorController("Example FX");
             var layer = _controller.NewLayer();
@@ -146,28 +152,28 @@ namespace LackofbindingsAAC.Examples
             // }), directBlendWeight);
 
             // Set up main presets
-            var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, mainPresets);
-            
+            var presetsLayer = _utils.NewPresetsLayer("Main", paramPrefixBase, MainPresets);
 
-            assetContainer.UpdateAnimator("FX", _controller.AnimatorController);
+
+            AssetContainer.UpdateAnimator("FX", _controller.AnimatorController);
         }
 
         [ContextMenu("Convert presets from RGB to HSV")]
         public void ConvertPresetsRGBToHSVAction()
         {
-            AACUtils.ConvertPresetsRGBToHSV(mainPresets);
+            AACUtils.ConvertPresetsRGBToHSV(MainPresets);
         }
 
         [ContextMenu("Copy Presets to Files")]
         public void CopyPresetsToFilesAction()
         {
-            AACUtils.CopyPresetsToFiles(oldController, mainPresets);
+            AACUtils.CopyPresetsToFiles(OldController, MainPresets);
         }
 
         [ContextMenu("Sync Animator Params To Main List")]
         public void SyncAnimatorParamsToListAction()
         {
-            AACUtils.SyncAnimatorParamsToList(_controller.AnimatorController, mainParamsList);
+            AACUtils.SyncAnimatorParamsToList(_controller.AnimatorController, MainParamsList);
         }
 
         [ContextMenu("Generate Animator")]
