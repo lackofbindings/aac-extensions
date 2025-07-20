@@ -29,6 +29,16 @@ namespace LackofbindingsAAC
             _anyLayer = baseLayer;
         }
 
+        /// <summary>
+        /// One-shot command that goes through each VRCExpressionParameters list in presets and converts it from RGB to HSV.
+        /// Looks for matching sets of params ending in /R /G /B and the color saved in each defaultValue,
+        /// converts the color to HSV and saves it back as the same params but ending in /H /S /V.
+        /// Converts in-place.
+        /// Expected to be called from a [ContextMenu("...")].
+        /// </summary>
+        /// <remarks>
+        /// Was designed to help convert from RGB to HSV (more user-friendly controls), not terribly useful now.
+        /// </remarks>
         public static void ConvertPresetsRGBToHSV(VRCExpressionParameters[] presets)
         {
             foreach (var preset in presets)
@@ -86,6 +96,16 @@ namespace LackofbindingsAAC
             }
         }
 
+        /// <summary>
+        /// One-shot command that fills out each VRCExpressionParameters list assigned in newPresets 
+        /// with the params that are in the VRCAvatarParameterDriver on the preset state with the same name.
+        /// Expects the animator layer to be called "Presets". 
+        /// Expects each VRCExpressionParameters lists file name to include some part of the name of the state to copy from.
+        /// Expected to be called from a [ContextMenu("...")].
+        /// </summary>
+        /// <remarks>
+        /// Was designed to help convert non-AAC avatars to AAC, not terribly useful now.
+        /// </remarks>
         public static void CopyPresetsToFiles(AnimatorController oldController, VRCExpressionParameters[] newPresets)
         {
             // var oldPresets = animationController
@@ -122,6 +142,12 @@ namespace LackofbindingsAAC
             }
         }
 
+        /// <summary>
+        /// One-shot command that will append all params from a given AnimatorController into a VRCExpressionParameters list.
+        /// Won't create duplicates. Each run appends a separator param so you can easily tell what was added, you should manually remove it.
+        /// Helps automate copying large numbers of params from a generated animator into a params list.
+        /// Expected to be called from a [ContextMenu("...")].
+        /// </summary>
         public static void SyncAnimatorParamsToList(AnimatorController controller, VRCExpressionParameters paramsList)
         {
             var separatorLParam = new VRCExpressionParameters.Parameter();
@@ -163,6 +189,15 @@ namespace LackofbindingsAAC
             UnityEditor.EditorUtility.SetDirty(paramsList);
         }
 
+        /// <summary>
+        /// Converts long param names with slashes to more human-readable names with spaces.
+        /// Useful for creating names for clips/blendTrees/layers/etc from a given param name or prefix.
+        /// </summary>
+        /// <remarks>
+        /// Skips the first two segments because it is designed for my workflow 
+        /// where the params are prefixed with the avatar base name and the asset/project name.
+        /// eg: Chimera/ClothingPack1/...
+        /// </remarks>
         public static string PrefixToClipName(string paramPrefix)
         {
             string[] parts = paramPrefix.Split("/");
@@ -175,7 +210,7 @@ namespace LackofbindingsAAC
 
         /// <summary>
         /// Returns a new 1D blend tree that will drive the given color property with individual R,G,B floats.
-        /// Creates the required params based on the given param prefix.
+        /// Creates the required params based on the given param prefix (.../R, .../G, .../B).
         /// </summary>
         public AacFlBlendTree1D NewRGBBlendTree(string paramPrefix, Component anyComponent, string propertyName)
         {
@@ -212,7 +247,7 @@ namespace LackofbindingsAAC
 
         /// <summary>
         /// Returns a new 1D blend tree that will drive the given color property with individual H,S,V floats.
-        /// Creates the required params based on the given param prefix.
+        /// Creates the required params based on the given param prefix (.../H, .../S, .../V).
         /// </summary>
         public AacFlBlendTree1D NewHSVBlendTree(string paramPrefix, Component[] anyComponents, string propertyName)
         {
@@ -249,6 +284,15 @@ namespace LackofbindingsAAC
             return STree;
         }
 
+        /// <summary>
+        /// Creates a new 1D blendTree that animates texture Vec4 scale/offsets to show 1 of 4 quadrants, or none.
+        /// For use with textures that atlas together 4 smaller textures into 4 quadrants.
+        /// Selects one of four quadrants to show based on the float value of {paramPrefix}/Pattern:
+        /// 0.00: None, 0.25: Bottom Left, 0.5: Bottom Right, 0.75: Top Left, 1.00: Top Right.
+        /// </summary>
+        /// <param name="paramPrefix">"/Pattern" will be appended.</param>
+        /// <param name="anyComponent">The renderer to animate.</param>
+        /// <param name="propertyPrefix">The material property before the dot separating the axis eg: material._RGBAColorMaskMap_ST_R ... .x</param>
         public AacFlBlendTree1D NewPatternBlendTree(string paramPrefix, Component anyComponent, string propertyPrefix)
         {
             string clipPrefix = PrefixToClipName(paramPrefix);
@@ -293,21 +337,35 @@ namespace LackofbindingsAAC
             return pTree;
         }
 
+        /// <summary>
+        /// Creates a new 1D blendTree that toggles between no effect and more metallic, (or less metallic and no effect if inverted).
+        /// Only makes sense if your shader exposes some kind of metallic mod slider that goes from -1 to 0 to 1. 
+        /// Where 0 is no effect and -1 and 1 are less and more metallic respectively.
+        /// </summary>
+        /// <param name="invert">Set this true if the surface is metallic by default</param>
         public AacFlBlendTree1D NewMetallicBlendTree(string paramPrefix, Component anyComponent, string propertyName, bool invert = false)
         {
             return NewToggleBlendTree($"{paramPrefix}/Metallic", anyComponent, propertyName, invert ? -1 : 0, invert ? 0 : 1);
         }
 
+        /// <inheritdoc cref="NewToggleBlendTree(AacFlFloatParameter param, Component[] anyComponents, string propertyName, float valueMin = 0, float valueMax = 1)"/>
         public AacFlBlendTree1D NewToggleBlendTree(string paramPrefix, Component anyComponent, string propertyName, float valueMin = 0, float valueMax = 1)
         {
             return NewToggleBlendTree(paramPrefix, new[] { anyComponent }, propertyName, valueMin, valueMax);
         }
 
+        /// <inheritdoc cref="NewToggleBlendTree(AacFlFloatParameter param, Component[] anyComponents, string propertyName, float valueMin = 0, float valueMax = 1)"/>
         public AacFlBlendTree1D NewToggleBlendTree(string paramPrefix, Component[] anyComponents, string propertyName, float valueMin = 0, float valueMax = 1)
         {
             return NewToggleBlendTree(_anyLayer.FloatParameter(paramPrefix), anyComponents, propertyName, valueMin, valueMax);
         }
 
+        /// <summary>
+        /// Creates a new 1D blendTree for quick and easy setup of any simple two-state/toggle of any component property.
+        /// </summary>
+        /// <param name="valueMin">Value to animate property to if param is 0</param>
+        /// <param name="valueMax">Value to animate property to if param is 1</param>
+        /// <returns></returns>
         public AacFlBlendTree1D NewToggleBlendTree(AacFlFloatParameter param, Component[] anyComponents, string propertyName, float valueMin = 0, float valueMax = 1)
         {
             string clipPrefix = PrefixToClipName(param.Name);
@@ -340,6 +398,11 @@ namespace LackofbindingsAAC
             return tree;
         }
 
+        /// <summary>
+        /// Creates a new 1D blendTree that slides between -1, 0, and 1 along the provided float param.
+        /// Only makes sense if your shader exposes some kind of smoothness mod slider that goes from -1 to 0 to 1. 
+        /// Where 0 is no effect and -1 and 1 are less and more smooth respectively.
+        /// </summary>
         public AacFlBlendTree1D NewSmoothnessBlendTree(string paramPrefix, Component anyComponent, string propertyName)
         {
             string clipPrefix = PrefixToClipName(paramPrefix);
@@ -361,7 +424,7 @@ namespace LackofbindingsAAC
             return tree;
         }
 
-        // Single component overload of below
+        /// <inheritdoc cref="NewHueBlendTree(AacFlFloatParameter param, Component[] anyComponents, string propertyName, float brightness = 1.0f, bool addBlackAndWhite = false, bool isHDR = false)" />
         public AacFlBlendTree1D NewHueBlendTree(AacFlFloatParameter param, Component anyComponent, string propertyName, float brightness = 1.0f, bool addBlackAndWhite = false, bool isHDR = false)
         {
             return NewHueBlendTree(param, new[] { anyComponent }, propertyName, brightness, addBlackAndWhite, isHDR);
@@ -376,7 +439,6 @@ namespace LackofbindingsAAC
         /// <param name="brightness">Multiplier for HDR colors, the color is automatically considered HDR if this value is above one</param>
         /// <param name="addBlackAndWhite">Adds an extra keyframe for pure white and pure black at 0 and 1, respectively</param>
         /// <param name="isHDR">Use to force HDR mode on (only needed if HDR multiplier needs to be less than 1.0)</param>
-        /// <returns></returns>
         public AacFlBlendTree1D NewHueBlendTree(AacFlFloatParameter param, Component[] anyComponents, string propertyName, float brightness = 1.0f, bool addBlackAndWhite = false, bool isHDR = false)
         {
             string clipPrefix = PrefixToClipName(param.Name);
@@ -450,6 +512,12 @@ namespace LackofbindingsAAC
         /// If true, will add an extra state that randomizes all parameters. Activates when preset param is 255.
         /// Parameter list will be based on the first preset. 
         /// Extra logic is added to round non-floats to zero or one.
+        /// </param>
+        /// <param name="addCustom">
+        /// If greater than zero, will add that number of slots to save and load the current configuration.
+        /// Parameter list will be based on the first preset.
+        /// Warning: Number of parameters will get out of hand very quickly. 
+        /// Use SyncAnimatorParamsToList() to help automate copying resulting params out to the main param list.
         /// </param>
         public AacFlLayer NewPresetsLayer(string layerNamePrefix, string paramPrefix, VRCExpressionParameters[] presets, bool addRandom = true, int addCustom = 1)
         {
@@ -596,7 +664,6 @@ namespace LackofbindingsAAC
         /// </summary>
         /// <param name="paramPrefix">Prefix for the FirstRun param that will be added, usually the base prefix</param>
         /// <param name="defaults">VRC parameters list with the parameter types and value to set. BEWARE: Use the types as they appear in the animator, not the synced versions</param>
-        /// <returns></returns>
         public AacFlLayer NewSetDefaultsLayer(string paramPrefix, VRCExpressionParameters defaults)
         {
             var presetsLayer = _controller.NewLayer("Set Defaults"); 
@@ -650,7 +717,8 @@ namespace LackofbindingsAAC
 
         /// <summary>
         /// Creates and adds a new layer that only allows one of the supplied parameters to be true/1 at a time, sets all others to false/0
-        /// Automatically converts bools to Floats (with the suffix "_Float") and drives them to match their bool counterpart.
+        /// Automatically converts bools to Floats (with the suffix "_Float") and drives them to match their bool counterpart, 
+        /// so that you can read the _float version of the bool in a blendTree alongside other floats.
         /// </summary>
         public AacFlLayer NewExclusiveParametersLayer(string layerNamePrefix, AacFlParameter[] parameters)
         {
@@ -784,6 +852,10 @@ namespace LackofbindingsAAC
             return firstTree;
         }
 
+        /// <summary>
+        /// Creates a new float param that stays in sync with the value of a given bool param.
+        /// WARNING: Only works one-way! The resulting float should be considered READ-ONLY.
+        /// </summary>
         public AacFlFloatParameter CopyBoolToFloat(AacFlBoolParameter boolParameter)
         {
             string floatParameterName = $"{boolParameter.Name}_Float";
@@ -791,6 +863,10 @@ namespace LackofbindingsAAC
             return layer.FloatParameter(floatParameterName);
         }
 
+        /// <summary>
+        /// Creates a new layer that manages keeping a float param in sync with a bool param.
+        /// WARNING: Only works one way! The resulting float should be considered READ-ONLY.
+        /// </summary>
         public AacFlLayer NewCopyBoolToFloatLayer(AacFlBoolParameter boolParameter, string floatParameterName)
         {
             var layer = _controller.NewLayer($"{PrefixToClipName(boolParameter.Name)} To Float");
